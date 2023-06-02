@@ -7,23 +7,22 @@ from collections import deque
 class CommitNode:
     def __init__(self, commit_hash):
         """
-    :type commit_hash: str
-    """
+        :type commit_hash: str
+        """
         self.commit_hash = commit_hash
         self.parents = set()
         self.children = set()
 
 
 def getPath():
-
     # get current working directory
     current = os.getcwd()
     # returns true if path is an existing directory
     is_valid_path = False
 
-    while current != '':
+    while current != "":
         # append .git
-        check = current + '/.git'
+        check = current + "/.git"
 
         # check if path is valid
         is_valid_path = os.path.isdir(check)
@@ -33,7 +32,7 @@ def getPath():
             return current
         # else, delete
         else:
-            current = current[:current.rfind('/')]
+            current = current[: current.rfind("/")]
 
     # .git not found, print to stderr
     print("Not inside a Git repository", file=sys.stderr)
@@ -41,19 +40,18 @@ def getPath():
 
 
 def getBranch():
-
-    path = getPath() + '/.git/refs/heads'
+    path = getPath() + "/.git/refs/heads"
     branches = dict()
 
     for root, dirs, files in os.walk(path):
         for f in files:
-            branch = root + '/' + f
-            head = branch[branch.rfind('heads/') + 6:]
+            branch = root + "/" + f
+            head = branch[branch.rfind("heads/") + 6 :]
             commit = (open(branch).read()).strip()
             branches[head] = commit
 
     print(branches)
-    return (branches)
+    return branches
 
 
 # returns dictionary where branch name outputted when given commit hash
@@ -66,44 +64,34 @@ def map_hash_to_branch():
 
 
 def getGraph():
-
     # path
-    path = getPath() + '/.git/objects'
+    path = getPath() + "/.git/objects"
     # branch
     branch = getBranch()
 
     # dictionary
     graph = dict()  # maps hash to commitnode object
     stack = []
-    # childparent = dict() # maps child to parents
     root_commits = set()
 
     # loops through all branches
     for b, commit in branch.items():
-
         # add branch to stack
         stack.append(commit)
 
         while stack:
-
             # pop off last commit
             current_commit = stack.pop()
             # create commit node object
             c_object = CommitNode(current_commit)
 
             # obtain parent
-            # calculate path for branch commit objects
-            newpath = path + '/' + current_commit[0:2] + '/' + current_commit[
-                2:]
-            # read git object using zlib
-            file = open(newpath, 'rb')
-            compressed_data = file.read()
-            decompressed_data = zlib.decompress(compressed_data)
+            decompressed_data = os.popen("git cat-file -p " + current_commit).read()
             # parents: add to set and stack
-            strings = decompressed_data.decode('utf-8').split('\n')
+            strings = decompressed_data.split("\n")
             has_parents = False
             for string in strings:
-                if string.startswith('parent'):
+                if string.startswith("parent"):
                     parent = string[7:]
                     # add parent to parent set
                     c_object.parents.add(parent)
@@ -133,7 +121,6 @@ def getGraph():
 
 
 def topo_sort():
-
     graph, roots = getGraph()
     result = []
     queue = deque()
@@ -171,9 +158,9 @@ def topo_order_commits():
 
         if empty_line == True:
             # sticky start
-            print("=", end='')
+            print("=", end="")
             for child in node.children:
-                print(child, end='')
+                print(child, end="")
             print("")
             # if tip, print branch
             if commit in htb:
@@ -196,7 +183,7 @@ def topo_order_commits():
                 print(commit)
             # sticky end
             for parent in node.parents:
-                print(parent + ' ', end='')
+                print(parent + " ", end="")
             print("=")
             print("")
             empty_line = True
@@ -207,5 +194,5 @@ def topo_order_commits():
         print(commit)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     topo_order_commits()
