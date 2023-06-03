@@ -106,7 +106,6 @@ def getGraph():
         while stack:
             # pop off last commit
             current_commit = stack.pop()
-            # print(current_commit)
             # create commit node object
             c_object = CommitNode(current_commit)
 
