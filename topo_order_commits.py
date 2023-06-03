@@ -14,6 +14,12 @@ class CommitNode:
         self.children = set()
 
 
+"""
+This function is used to find the .git directory that is present in the current directory or any of its parent directories.
+If no .git directory is found, the program exits with an error message.
+"""
+
+
 def getPath():
     # get current working directory
     current = os.getcwd()
@@ -39,6 +45,12 @@ def getPath():
     exit(1)
 
 
+"""
+This function navigates to the .git/refs/heads directory to get the list of local branch names and their corresponding commit hashes. 
+The information is returned as a dictionary with branch names as keys and commit hashes as values.
+"""
+
+
 def getBranch():
     path = getPath() + "/.git/refs/heads"
     branches = dict()
@@ -53,6 +65,11 @@ def getBranch():
     return branches
 
 
+"""
+This function creates a mapping of commit hashes to their corresponding branch names, using the information retrieved by getBranch()
+"""
+
+
 # returns dictionary where branch name outputted when given commit hash
 def map_hash_to_branch():
     branch = getBranch()
@@ -62,9 +79,15 @@ def map_hash_to_branch():
     return hash_to_branch
 
 
+"""
+This function builds the commit graph. 
+For each branch, it starts from the latest commit and traverses the commit history by following the parent commits. 
+The commits and their relationships are stored in CommitNode objects and added to the graph dictionary (commit hash to CommitNode mapping). 
+The function also identifies root commits (those without parents) and returns the graph and the set of root commits.
+"""
+
+
 def getGraph():
-    # path
-    path = getPath() + "/.git/objects"
     # branch
     branch = getBranch()
 
@@ -73,7 +96,9 @@ def getGraph():
     stack = []
     root_commits = set()
 
-    # loops through all branches
+    # traverse commit history by following parents of the head
+    # create a commitnode object for each new commit seen
+    # populate commitnode with parents
     for b, commit in branch.items():
         # add branch to stack
         stack.append(commit)
@@ -81,14 +106,16 @@ def getGraph():
         while stack:
             # pop off last commit
             current_commit = stack.pop()
+            # print(current_commit)
             # create commit node object
             c_object = CommitNode(current_commit)
 
-            # obtain parent
+            # get git object
             decompressed_data = os.popen("git cat-file -p " + current_commit).read()
-            # parents: add to set and stack
+            # get the strings
             strings = decompressed_data.split("\n")
             has_parents = False
+            # find strings that start with parent and store them as parents in the commitnode object
             for string in strings:
                 if string.startswith("parent"):
                     parent = string[7:]
@@ -107,7 +134,7 @@ def getGraph():
                 # store commit object in graph
                 graph[current_commit] = c_object
 
-    # populate DAG with children
+    # populate DAG with children using parental relationships
     for commit, node in graph.items():
         # get "parent" commits
         parents = node.parents
@@ -117,6 +144,12 @@ def getGraph():
             parentnode.children.add(commit)
 
     return graph, root_commits
+
+
+"""
+This function does a topological sort using breadth first search.
+It then prints it in reverse so that the earliest commits are at the end of the list.
+"""
 
 
 def topo_sort():
