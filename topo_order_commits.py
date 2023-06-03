@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 
-import os, sys, zlib
+import os, sys
 from collections import deque
 
 
@@ -50,7 +50,6 @@ def getBranch():
             commit = (open(branch).read()).strip()
             branches[head] = commit
 
-    print(branches)
     return branches
 
 
