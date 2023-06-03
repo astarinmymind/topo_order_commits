@@ -190,7 +190,7 @@ def topo_order_commits():
 
         if empty_line == True:
             # sticky start
-            print("=", end="")
+            print("=")
             for child in node.children:
                 print(child, end="")
             print("")
@@ -220,6 +220,7 @@ def topo_order_commits():
             print("")
             empty_line = True
 
+    commit = order[-1]
     if commit in htb:
         print(commit, htb[commit])
     else:
